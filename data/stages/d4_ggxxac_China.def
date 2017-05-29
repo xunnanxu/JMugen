@@ -1,0 +1,133 @@
+[Info]
+name ="GGXX_AC_China"
+
+
+[Camera]
+startx =0
+starty =0
+boundleft  = -218
+boundright = 218
+boundhigh  =  -286
+boundlow   = 0
+tension = 50
+verticalfollow = .92
+floortension = 106
+
+[PlayerInfo]
+p1startx =-70
+p1starty =0
+p1startz =0
+p1facing =1
+
+p2startx =70
+p2starty =0
+p2startz =0
+p2facing =-1
+
+leftbound =-1000
+rightbound =1000
+topbound =0
+botbound =0
+
+
+[Scaling]
+topz =0
+botz =50
+topscale =1
+botscale =1.2
+xscale = 0.5
+yscale = 0.5
+
+[Bound]
+screenleft  =15
+screenright =15
+
+[StageInfo]
+zoffset = 222
+autoturn = 2                 ;�e�̒���
+resetBG = 0
+Hires = 1
+
+[Shadow]                     ;�e
+color = 100,100,100
+yscale = .27
+reflect = 0
+
+
+[Reflection]
+;intensity = 128
+
+
+[Music]
+bgmusic  = sound/Babel Nose.mp3
+bgvolume = 255
+
+;----------------------------------------------------------------------
+[BGdef]
+spr = d4_ggxxac_China.sff
+debugbg = 1
+
+[BG ��]
+type = normal
+spriteno = 0, 2
+layerno = 0
+start = 0,76
+delta = .94, 1.14
+trans = none
+mask = 1
+
+[BG ��]
+type = anim
+layerno = 0
+actionno = 10
+start = 0,76
+delta = .94, 1.14
+trans = None 
+mask = 0
+
+[BG �[��]
+type = anim
+layerno = 0
+actionno = 11
+start = 0,76
+delta = .94, 1.14
+trans = None 
+mask = 0
+
+[BG ��]
+type = normal
+spriteno = 0, 1
+layerno = 0
+start = 64,24
+delta = 1.32, 1.39
+trans = none
+mask = 1
+
+[BG �n��]
+type = normal
+spriteno = 0, 0
+layerno = 0
+start = 0,-16
+delta = 2, 2
+trans = none
+mask = 1
+
+;////////////�A�j��////////////////
+
+[Begin Action 10]
+10,0, 0,0, 10
+10,1, 0,0, 10
+10,2, 0,0, 10
+10,3, 0,0, 10
+10,4, 0,0, 10
+10,5, 0,0, 10
+10,6, 0,0, 10
+10,7, 0,0, 10
+10,8, 0,0, 10
+
+
+[Begin Action 11]
+11,0, 0,0, 15
+11,1, 0,0, 15
+11,2, 0,0, 15
+11,3, 0,0, 15
