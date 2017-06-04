@@ -11,14 +11,14 @@ public class Point2i {
         this.y = y;
     }
 
-    public static Point2f fromString(String input) {
+    public static Point2i fromString(String input) {
         String[] config = StringUtils.split(input, ',');
         if (config == null || config.length < 2) {
             throw new ConfigException("Invalid point: " + input);
         }
         int x = Integer.parseInt(config[0].trim());
         int y = Integer.parseInt(config[1].trim());
-        return new Point2f(x, y);
+        return new Point2i(x, y);
     }
 
     @Override

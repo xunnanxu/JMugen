@@ -33,14 +33,14 @@ public class StageDef implements Def<StageDef> {
             BG_CONFIG_CONVERTERS.put(SPRITE_NO, SpriteId::fromString);
             BG_CONFIG_CONVERTERS.put(LAYER_NO, Integer::valueOf);
             BG_CONFIG_CONVERTERS.put(START, Point2f::fromString);
-            BG_CONFIG_CONVERTERS.put(DELTA, XYPair::fromString);
+            BG_CONFIG_CONVERTERS.put(DELTA, Point2f::fromString);
             BG_CONFIG_CONVERTERS.put(TRANS, input -> Trans.valueOf(input.toUpperCase()));
             BG_CONFIG_CONVERTERS.put(ALPHA, Range::fromString);
             BG_CONFIG_CONVERTERS.put(MASK, BOOLEAN_CONVERTER);
-            BG_CONFIG_CONVERTERS.put(TILE, XYPair::fromString);
-            BG_CONFIG_CONVERTERS.put(TILE_SPACING, XYPair::fromString);
+            BG_CONFIG_CONVERTERS.put(TILE, Point2i::fromString);
+            BG_CONFIG_CONVERTERS.put(TILE_SPACING, Point2i::fromString);
             BG_CONFIG_CONVERTERS.put(WINDOW, Rectangle4i::fromString);
-            BG_CONFIG_CONVERTERS.put(WINDOW_DELTA, XYPair::fromString);
+            BG_CONFIG_CONVERTERS.put(WINDOW_DELTA, Point2f::fromString);
         }
 
         public static enum Type {
@@ -114,6 +114,14 @@ public class StageDef implements Def<StageDef> {
             return (Point2f) config.get(START);
         }
 
+        public int getTileX() {
+            return ((Point2i) config.get(TILE)).x;
+        }
+
+        public int getTileY() {
+            return ((Point2i) config.get(TILE)).y;
+        }
+
         @Override
         public BG load() {
             if (config.get(SPRITE_NO) == null) {
@@ -155,7 +163,7 @@ public class StageDef implements Def<StageDef> {
     private static final Map<String, Function<String, ?>> STAGE_CONFIG_CONVERTERS = new HashMap<>();
 
     static {
-        STAGE_CONFIG_CONVERTERS.put(LOCAL_COORD, XYPair::fromString);
+        STAGE_CONFIG_CONVERTERS.put(LOCAL_COORD, Point2i::fromString);
     }
 
     private static final Map<String, Function<String, ?>> BG_DEF_CONVERTERS = new HashMap<>();

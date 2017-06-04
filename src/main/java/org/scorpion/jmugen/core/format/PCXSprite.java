@@ -1,6 +1,7 @@
 package org.scorpion.jmugen.core.format;
 
 import com.google.common.io.LittleEndianDataInputStream;
+import org.scorpion.jmugen.core.maths.Point2i;
 import org.scorpion.jmugen.exception.GenericIOException;
 
 import java.io.*;
@@ -10,11 +11,13 @@ public class PCXSprite implements Sprite {
     protected byte[] data;
     protected PCXPalette palette;
     protected PCXHeader pcxHeader;
+    protected Point2i offset;
 
-    public PCXSprite(byte[] header, byte[] imageData, byte[] palette) {
+    public PCXSprite(byte[] header, byte[] imageData, byte[] palette, Point2i offset) {
         this.data = imageData;
         this.palette = new PCXPalette(palette);
         pcxHeader = new PCXHeader(header);
+        this.offset = offset;
     }
 
     /**
@@ -113,5 +116,15 @@ public class PCXSprite implements Sprite {
     @Override
     public int getHeight() {
         return pcxHeader.height;
+    }
+
+    @Override
+    public int getXOffset() {
+        return offset.x;
+    }
+
+    @Override
+    public int getYOffset() {
+        return offset.y;
     }
 }

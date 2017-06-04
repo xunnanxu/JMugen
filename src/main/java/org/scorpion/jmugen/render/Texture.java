@@ -20,12 +20,23 @@ import static org.lwjgl.opengl.GL13.*;
 
 public class Texture implements Loadable<Texture> {
 
+    public static class Properties {
+
+        public boolean repeatX;
+        public boolean repeatY;
+
+        public static final Properties DEFAULT = new Properties();
+
+    }
+
     protected int width, height;
     protected int textureId;
     protected BufferedImage bufferedImage;
     protected Sprite sprite;
+    protected Properties properties;
 
     public Texture(Resource resource) {
+        this.properties = Properties.DEFAULT;
         try {
             bufferedImage = ImageIO.read(resource.load());
         } catch (IOException e) {
@@ -33,8 +44,9 @@ public class Texture implements Loadable<Texture> {
         }
     }
 
-    public Texture(Sprite sprite) {
+    public Texture(Sprite sprite, Properties properties) {
         this.sprite = sprite;
+        this.properties = properties;
     }
 
     @Override
@@ -130,11 +142,11 @@ public class Texture implements Loadable<Texture> {
     private void initTexture(int[] abgr) {
         textureId = glGenTextures();
         bind();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, BufferUtils.toIntBuffer(abgr));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, BufferUtils.toIntBuffer(abgr));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, properties.repeatX ? GL_REPEAT : GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, properties.repeatY ? GL_REPEAT : GL_CLAMP_TO_BORDER);
         unbind();
     }
 
@@ -143,7 +155,7 @@ public class Texture implements Loadable<Texture> {
     }
 
     public void unbind() {
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
 }

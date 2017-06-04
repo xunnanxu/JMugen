@@ -1,6 +1,6 @@
 package org.scorpion.jmugen.core.element;
 
-import org.scorpion.jmugen.core.config.ConfigKeys;
+import org.scorpion.jmugen.core.config.SystemConfig;
 import org.scorpion.jmugen.core.config.SpriteId;
 import org.scorpion.jmugen.core.config.StageDef;
 import org.scorpion.jmugen.core.data.GroupedContent;
@@ -10,17 +10,15 @@ import org.scorpion.jmugen.core.maths.Vector3f;
 import org.scorpion.jmugen.core.render.RenderObject;
 import org.scorpion.jmugen.io.input.file.SffFileReader;
 import org.scorpion.jmugen.render.*;
-import org.scorpion.jmugen.util.ClasspathResource;
 import org.scorpion.jmugen.util.FileResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.lwjgl.opengl.GL11.*;
 
 public class Stage extends GameObject<StageDef> {
 
@@ -32,8 +30,8 @@ public class Stage extends GameObject<StageDef> {
     private GroupedContent<? extends Sprite> sprites;
     private Map<StageDef.BG, RenderObject> objectMap = new LinkedHashMap<>();
 
-    public Stage(Map<String, String> globalConfig, StageDef config) {
-        super(globalConfig, config);
+    public Stage(SystemConfig systemConfig, StageDef config) {
+        super(systemConfig, config);
     }
 
     @Override
@@ -42,7 +40,7 @@ public class Stage extends GameObject<StageDef> {
         foregroundBGs = bgs.stream().filter(bg -> bg.isForeground()).collect(Collectors.toList());
         backgroundBGs = bgs.stream().filter(bg -> !bg.isForeground()).collect(Collectors.toList());
 
-        String stagesHomeDir = globalConfig.get(ConfigKeys.RESOURCE_HOME) + File.separator + STAGES_DIR;
+        String stagesHomeDir = systemConfig.getResourceHome() + File.separator + STAGES_DIR;
         File spriteFile = new File(stagesHomeDir, config.getSpriteFile());
         SffFileReader reader = new SffFileReader(new FileResource(spriteFile));
 
@@ -58,7 +56,9 @@ public class Stage extends GameObject<StageDef> {
             if (sprite == null) {
                 continue;
             }
-            Texture texture = new Texture(sprite).load();
+            Texture.Properties textureProps = new Texture.Properties();
+            textureProps.repeatX = bg.getTileX() != 0;
+            Texture texture = new Texture(sprite, textureProps).load();
             int width = sprite.getWidth();
             int height = sprite.getHeight();
 
@@ -70,9 +70,12 @@ public class Stage extends GameObject<StageDef> {
             LOG.debug(bg.getName() + " width: " + width);
             LOG.debug(bg.getName() + " height: " + height);
 
+            // for mugen sprites, the "start" coordinates are related to the top center of the screen
             Mesh mesh = new RectangularMesh(
-                    new Vector3f((320 - width) / 2, -start.y, 0),
-                    new Vector3f((320 + width) / 2, -start.y - height, 0)
+                    new Vector3f(systemConfig.getGameWidth() / 2 - sprite.getXOffset(),
+                            -start.y + sprite.getYOffset(), 0),
+                    new Vector3f(systemConfig.getGameWidth() / 2 - sprite.getXOffset() + sprite.getWidth(),
+                            -start.y - height + sprite.getYOffset(), 0)
             );
             objectMap.put(bg, new RenderObject(mesh, texture));
         }
@@ -80,15 +83,16 @@ public class Stage extends GameObject<StageDef> {
 
     @Override
     public void render() {
+        glDisable(GL_DEPTH_TEST);
         for (Map.Entry<StageDef.BG, RenderObject> entry : objectMap.entrySet()) {
             StageDef.BG bg = entry.getKey();
-//            System.out.println(bg.getSpriteId());
             Shader bgShader = Shaders.getBackgroundShader();
             bgShader.enable();
             bgShader.setMatrix4f("vw_mat", Camera.INSTANCE.getViewMatrix());
             entry.getValue().render();
             bgShader.disable();
         }
+        glEnable(GL_DEPTH_TEST);
     }
 
     @Override

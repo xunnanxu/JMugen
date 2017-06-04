@@ -22,8 +22,5 @@ void main()
     }
     else {
         color = texture(tex, fs_in.tc);
-        if (color.a == 0.0) {
-            discard;
-        }
     }
 }

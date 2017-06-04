@@ -4,6 +4,7 @@ import com.google.common.io.LittleEndianDataInputStream;
 import org.scorpion.jmugen.core.data.GroupedContent;
 import org.scorpion.jmugen.core.format.PCXSprite;
 import org.scorpion.jmugen.core.format.Sprite;
+import org.scorpion.jmugen.core.maths.Point2i;
 import org.scorpion.jmugen.exception.GenericIOException;
 import org.scorpion.jmugen.io.input.util.IOHelpers;
 import org.scorpion.jmugen.util.FileResource;
@@ -121,6 +122,7 @@ public class SffFileReader implements Loadable<GroupedContent<? extends Sprite>>
                     (!spriteHeader.usePrevPal ? PCXSprite.PCXPalette.PALETTE_SIZE : 0);
             int group = spriteHeader.group;
             int index = spriteHeader.index;
+            Point2i spriteOffset = new Point2i(spriteHeader.xAxis, spriteHeader.yAxis);
 
             byte[] header = new byte[PCXSprite.PCXHeader.HEADER_SIZE];
             byte[] imageData = new byte[imageSize];
@@ -165,7 +167,7 @@ public class SffFileReader implements Loadable<GroupedContent<? extends Sprite>>
                     offset = nextPos;
                     continue;
                 }
-                sprite = new PCXSprite(header, imageData, prevPal);
+                sprite = new PCXSprite(header, imageData, prevPal, spriteOffset);
             }
             else {
                 if (imageData.length < PCXSprite.PCXHeader.HEADER_SIZE) {
@@ -174,7 +176,7 @@ public class SffFileReader implements Loadable<GroupedContent<? extends Sprite>>
                     offset = nextPos;
                     continue;
                 }
-                sprite = new PCXSprite(header, imageData, palette);
+                sprite = new PCXSprite(header, imageData, palette, spriteOffset);
                 if (sprite.getPalette() != null) {
                     prevPal = sprite.getPalette().getRaw();
                 }

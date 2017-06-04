@@ -1,13 +1,10 @@
 package org.scorpion.jmugen.core.config;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GroupedConfig {
 
-    private Map<String, Config> container = new HashMap<>();
+    private Map<String, Config> container = new LinkedHashMap<>();
 
     public static class Builder {
 

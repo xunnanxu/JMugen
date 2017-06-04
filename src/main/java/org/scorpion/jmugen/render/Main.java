@@ -3,10 +3,7 @@ package org.scorpion.jmugen.render;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
-import org.scorpion.jmugen.core.config.ConfigKeys;
-import org.scorpion.jmugen.core.config.Def;
-import org.scorpion.jmugen.core.config.DefParser;
-import org.scorpion.jmugen.core.config.StageDef;
+import org.scorpion.jmugen.core.config.*;
 import org.scorpion.jmugen.core.element.GameObject;
 import org.scorpion.jmugen.core.element.Stage;
 import org.scorpion.jmugen.core.maths.Matrix4f;
@@ -24,28 +21,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL14.glBlendFuncSeparate;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Main implements Runnable {
-
-    Map<String, String> configs;
 
     ExecutorService diskService;
 
     private boolean shouldTerminate;
     private boolean silhouetteMode;
     private long window;
-    private int windowWidth, windowHeight;
-    private int width, height;
+    private SystemConfig systemConfig;
 
     KeyboardInputHandler keyboardInputHandler = new KeyboardInputHandler();
     FpsCounter fpsCounter = new FpsCounter();
@@ -91,43 +82,39 @@ public class Main implements Runnable {
 
     private void bootstrap() {
         diskService = Executors.newSingleThreadExecutor();
+        StageDef stageDef = new StageDef("kfm", DefParser.parse(new FileResource("data/stages/kfm.def"))).load();
+        Stage stage = new Stage(systemConfig, stageDef);
+        elements.add(stage);
     }
 
-    private void loadConfig() {
+    private void loadGlobalConfig() {
         FileResource configFile = new FileResource("config.properties");
         LOG.info("Loading configs from " + configFile);
+        Map<String, String> configs;
         try {
             configs = PropertyUtils.loadConfig(configFile);
         } catch (IOException e) {
             throw new InitializationError("Failed to load configs", e);
         }
-        windowWidth = Integer.parseInt(configs.get(ConfigKeys.HORIZONTAL_RES));
-        windowHeight = Integer.parseInt(configs.get(ConfigKeys.VERTICAL_RES));
-        width = Integer.parseInt(configs.get(ConfigKeys.GAME_WIDTH));
-        height = Integer.parseInt(configs.get(ConfigKeys.GAME_HEIGHT));
+        systemConfig = new SystemConfig(configs);
         LOG.info("Configs successfully loaded");
     }
 
     private void loadResources() {
-        String resHome = configs.get(ConfigKeys.RESOURCE_HOME);
-        LOG.info("Loading resources from " + resHome);
-        StageDef stageDef = new StageDef("kfm", DefParser.parse(new FileResource("data/stages/kfm.def"))).load();
-        Stage stage = new Stage(configs, stageDef);
-        elements.add(stage);
+        LOG.info("Loading resources from " + systemConfig.getResourceHome());
+        List<Callable<Void>> loadables = elements.stream().map(g -> (Callable<Void>) g::load).collect(Collectors.toList());
         try {
-            for (Future<Void> f : diskService.invokeAll(elements)) {
+            for (Future<Void> f : diskService.invokeAll(loadables)) {
                 f.get();
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }
 
     private void init() {
+        loadGlobalConfig();
         bootstrap();
-        loadConfig();
         loadResources();
 
         if (!glfwInit()) {
@@ -135,10 +122,11 @@ public class Main implements Runnable {
         }
 
         glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-        window = glfwCreateWindow(windowWidth, windowHeight, "JMugen", NULL, NULL);
+        window = glfwCreateWindow(systemConfig.getWindowWidth(), systemConfig.getWindowHeight(), "JMugen", NULL, NULL);
 
         GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        glfwSetWindowPos(window, (videoMode.width() - windowWidth) / 2, (videoMode.height() - windowHeight) / 2);
+        glfwSetWindowPos(window, (videoMode.width() - systemConfig.getWindowWidth()) / 2,
+                (videoMode.height() - systemConfig.getWindowHeight()) / 2);
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
 
@@ -151,11 +139,7 @@ public class Main implements Runnable {
         fpsCounter.init();
 
         GL.createCapabilities();
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         glActiveTexture(GL_TEXTURE1);
         Shaders.loadBackgroundShader();
 
@@ -163,9 +147,9 @@ public class Main implements Runnable {
         bgShader.enable();
         Matrix4f projectionMatrix = Matrix4f.orthographic(
                 0,
-                width,
+                systemConfig.getGameWidth(),
                 0,
-                -height,
+                -systemConfig.getGameHeight(),
                 -1.0f,
                 1.0f
         );
@@ -196,6 +180,7 @@ public class Main implements Runnable {
 
     private void render() {
         try {
+            glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             for (Renderable renderable : elements) {
                 renderable.render();
