@@ -9,6 +9,9 @@ in DATA
 
 uniform sampler2D tex;
 uniform bool silhouette_mode;
+uniform float alpha_modifier = 1f;
+
+vec4 apply_modifier(vec4 color);
 
 void main()
 {
@@ -17,10 +20,16 @@ void main()
             color = vec4(1, 0, 0, 1);
         }
         else {
-            color = texture(tex, fs_in.tc);
+            color = apply_modifier(texture(tex, fs_in.tc));
         }
     }
     else {
-        color = texture(tex, fs_in.tc);
+        color = apply_modifier(texture(tex, fs_in.tc));
     }
+}
+
+vec4 apply_modifier(vec4 color)
+{
+    color.a = color.a * alpha_modifier;
+    return color;
 }

@@ -21,6 +21,10 @@ public class Shader {
     private Resource fragment;
     private Map<String, Integer> locationCache = new HashMap<>();
 
+    public static final String VIEW_MATRIX = "view_mat";
+    public static final String MODEL_MATRIX = "model_mat";
+    public static final String ALPHA_MODIFIER = "alpha_modifier";
+
     public Shader(String name, Resource vertex, Resource fragment) {
         this.name = name;
         this.vertex = vertex;
@@ -30,6 +34,14 @@ public class Shader {
     public void load() {
         programId = ShaderUtils.loadShaders(vertex, fragment);
         LOG.debug("Shader " + this.name + " has been loaded to " + programId);
+    }
+
+    public void setUniform1f(String name, float value) {
+        int loc = getUniformLocation(name);
+        if (loc == -1) {
+            return;
+        }
+        glUniform1f(loc, value);
     }
 
     public void setUniform1i(String name, int value) {

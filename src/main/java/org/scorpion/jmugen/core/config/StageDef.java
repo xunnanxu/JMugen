@@ -35,7 +35,7 @@ public class StageDef implements Def<StageDef> {
             BG_CONFIG_CONVERTERS.put(START, Point2f::fromString);
             BG_CONFIG_CONVERTERS.put(DELTA, Point2f::fromString);
             BG_CONFIG_CONVERTERS.put(TRANS, input -> Trans.valueOf(input.toUpperCase()));
-            BG_CONFIG_CONVERTERS.put(ALPHA, Range::fromString);
+            BG_CONFIG_CONVERTERS.put(ALPHA, Point2i::fromString);
             BG_CONFIG_CONVERTERS.put(MASK, BOOLEAN_CONVERTER);
             BG_CONFIG_CONVERTERS.put(TILE, Point2i::fromString);
             BG_CONFIG_CONVERTERS.put(TILE_SPACING, Point2i::fromString);
@@ -43,7 +43,7 @@ public class StageDef implements Def<StageDef> {
             BG_CONFIG_CONVERTERS.put(WINDOW_DELTA, Point2f::fromString);
         }
 
-        public static enum Type {
+        public enum Type {
             NORMAL,
             PARALLAX
         }
@@ -56,7 +56,7 @@ public class StageDef implements Def<StageDef> {
          *  "addalpha" for colour addition with control over alpha values (you need an "alpha" parameter if you use this)
          *  "sub" for colour subtraction (like a shadow effect)
          */
-        public static enum Trans {
+        public enum Trans {
             NONE,
             ADD,
             ADD1,
@@ -120,6 +120,15 @@ public class StageDef implements Def<StageDef> {
 
         public int getTileY() {
             return ((Point2i) config.get(TILE)).y;
+        }
+
+        public Trans getTrans() {
+            return config.get(TRANS);
+        }
+
+        public float getAlphaModifier() {
+            Point2i alphaConfig = config.get(ALPHA);
+            return ((float) alphaConfig.x) / (alphaConfig.x + alphaConfig.y);
         }
 
         @Override

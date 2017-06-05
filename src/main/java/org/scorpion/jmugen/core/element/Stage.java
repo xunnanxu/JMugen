@@ -1,13 +1,14 @@
 package org.scorpion.jmugen.core.element;
 
-import org.scorpion.jmugen.core.config.SystemConfig;
 import org.scorpion.jmugen.core.config.SpriteId;
 import org.scorpion.jmugen.core.config.StageDef;
+import org.scorpion.jmugen.core.config.SystemConfig;
 import org.scorpion.jmugen.core.data.GroupedContent;
 import org.scorpion.jmugen.core.format.Sprite;
 import org.scorpion.jmugen.core.maths.Point2f;
 import org.scorpion.jmugen.core.maths.Vector3f;
 import org.scorpion.jmugen.core.render.RenderObject;
+import org.scorpion.jmugen.core.render.RenderProperties;
 import org.scorpion.jmugen.io.input.file.SffFileReader;
 import org.scorpion.jmugen.render.*;
 import org.scorpion.jmugen.util.FileResource;
@@ -70,6 +71,10 @@ public class Stage extends GameObject<StageDef> {
             LOG.debug(bg.getName() + " width: " + width);
             LOG.debug(bg.getName() + " height: " + height);
 
+            RenderProperties renderProperties = new RenderProperties();
+            renderProperties.colorBlending = bg.getTrans();
+            renderProperties.alphaModifier = bg.getAlphaModifier();
+
             // for mugen sprites, the "start" coordinates are related to the top center of the screen
             Mesh mesh = new RectangularMesh(
                     new Vector3f(systemConfig.getGameWidth() / 2 - sprite.getXOffset(),
@@ -77,21 +82,23 @@ public class Stage extends GameObject<StageDef> {
                     new Vector3f(systemConfig.getGameWidth() / 2 - sprite.getXOffset() + sprite.getWidth(),
                             -start.y - height + sprite.getYOffset(), 0)
             );
-            objectMap.put(bg, new RenderObject(mesh, texture));
+            objectMap.put(bg, new RenderObject(mesh, texture, renderProperties));
         }
     }
 
     @Override
     public void render() {
         glDisable(GL_DEPTH_TEST);
+        Shader bgShader = Shaders.getBackgroundShader();
+        bgShader.enable();
+        bgShader.setMatrix4f(Shader.VIEW_MATRIX, Camera.INSTANCE.getViewMatrix());
         for (Map.Entry<StageDef.BG, RenderObject> entry : objectMap.entrySet()) {
-            StageDef.BG bg = entry.getKey();
-            Shader bgShader = Shaders.getBackgroundShader();
-            bgShader.enable();
-            bgShader.setMatrix4f("vw_mat", Camera.INSTANCE.getViewMatrix());
-            entry.getValue().render();
-            bgShader.disable();
+            RenderObject renderObject = entry.getValue();
+            renderObject.configShader(bgShader);
+            renderObject.render();
+            renderObject.resetShader(bgShader);
         }
+        bgShader.disable();
         glEnable(GL_DEPTH_TEST);
     }
 
