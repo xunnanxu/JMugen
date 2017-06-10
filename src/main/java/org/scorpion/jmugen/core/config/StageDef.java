@@ -156,17 +156,25 @@ public class StageDef implements Def<StageDef> {
     private static final String GROUP_STAGE_INFO = "stageinfo";
     private static final String LOCAL_COORD = "localcoord";
 
+    private static final String GROUP_SCALING_INFO = "scaling";
+    private static final String XSCALE = "xscale";
+    private static final String YSCALE = "yscale";
+
     private static final String GROUP_BG_DEF = "bgdef";
     private static final String SPR = "spr";
     private static final String DEBUG_BG = "debugbg";
 
     private static final GroupedConfig DEFAULT_GENERAL_CONFIG = new GroupedConfig.Builder()
             .add(GROUP_STAGE_INFO,
-                    new Config.Builder()
+                    Config.build()
                             .add(LOCAL_COORD, "320,240")
                             .get()
             )
             .add(GROUP_BG_DEF, new Config(DEBUG_BG, "0"))
+            .add(GROUP_SCALING_INFO, Config.build()
+                    .add(XSCALE, 1.0f)
+                    .add(YSCALE, 1.0f)
+                    .get())
             .get();
 
     private static final Map<String, Function<String, ?>> STAGE_CONFIG_CONVERTERS = new HashMap<>();
@@ -182,6 +190,12 @@ public class StageDef implements Def<StageDef> {
         BG_DEF_CONVERTERS.put(DEBUG_BG, BOOLEAN_CONVERTER);
     }
 
+    private static final Map<String, Function<String, ?>> SCALING_CONFIG_CONVERTERS = new HashMap<>();
+    static {
+        SCALING_CONFIG_CONVERTERS.put(XSCALE, Float::parseFloat);
+        SCALING_CONFIG_CONVERTERS.put(YSCALE, Float::parseFloat);
+    }
+
     private String name;
     private GroupedConfig stageConfig;
     private List<BG> backgrounds = new ArrayList<>();
@@ -194,24 +208,29 @@ public class StageDef implements Def<StageDef> {
     @Override
     public StageDef load() {
         Config generalInfoConfig = Optional.ofNullable(stageConfig.get(GROUP_GERERAL_INFO))
-                .orElse(new Config());
+                .orElseGet(Config::new);
         String stageName = generalInfoConfig.get(STAGE_NAME);
         if (stageName != null) {
             this.name = stageName;
         }
 
         Config stageInfoConfig = Optional.ofNullable(stageConfig.get(GROUP_STAGE_INFO))
-                .orElse(new Config())
+                .orElseGet(Config::new)
                 .applyConverters(STAGE_CONFIG_CONVERTERS);
         stageConfig.add(GROUP_STAGE_INFO, stageInfoConfig);
 
         Config bgConfig = Optional.ofNullable(stageConfig.get(GROUP_BG_DEF))
-                .orElse(new Config())
+                .orElseGet(Config::new)
                 .applyConverters(BG_DEF_CONVERTERS);
         if (bgConfig.get(SPR) == null) {
             throw ConfigException.missing("Stage " + name, GROUP_BG_DEF, SPR);
         }
         stageConfig.add(GROUP_BG_DEF, bgConfig);
+
+        Config scalingConfig = Optional.ofNullable(stageConfig.get(GROUP_SCALING_INFO))
+                .orElseGet(Config::new)
+                .applyConverters(SCALING_CONFIG_CONVERTERS);
+        stageConfig.add(GROUP_SCALING_INFO, scalingConfig);
 
         // process BGs
         stageConfig.groups().forEach(group -> {
@@ -236,6 +255,14 @@ public class StageDef implements Def<StageDef> {
 
     public String getSpriteFile() {
         return stageConfig.get(GROUP_BG_DEF).get(SPR);
+    }
+
+    public float getScalingX() {
+        return stageConfig.get(GROUP_SCALING_INFO, XSCALE);
+    }
+
+    public float getScalingY() {
+        return stageConfig.get(GROUP_SCALING_INFO, YSCALE);
     }
 
     public boolean isDebugBgEnabled() {

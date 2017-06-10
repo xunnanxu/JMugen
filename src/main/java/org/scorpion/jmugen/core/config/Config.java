@@ -16,6 +16,10 @@ public class Config {
         container.put(key, value);
     }
 
+    public static Builder build() {
+        return new Builder();
+    }
+
     public static class Builder {
 
         Config config = new Config();

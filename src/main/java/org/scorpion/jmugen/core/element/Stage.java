@@ -5,6 +5,7 @@ import org.scorpion.jmugen.core.config.StageDef;
 import org.scorpion.jmugen.core.config.SystemConfig;
 import org.scorpion.jmugen.core.data.GroupedContent;
 import org.scorpion.jmugen.core.format.Sprite;
+import org.scorpion.jmugen.core.maths.Matrix4f;
 import org.scorpion.jmugen.core.maths.Point2f;
 import org.scorpion.jmugen.core.maths.Vector3f;
 import org.scorpion.jmugen.core.render.RenderObject;
@@ -28,6 +29,7 @@ public class Stage extends GameObject<StageDef> {
 
     private List<StageDef.BG> foregroundBGs;
     private List<StageDef.BG> backgroundBGs;
+    private Matrix4f scalingMatrix;
     private GroupedContent<? extends Sprite> sprites;
     private Map<StageDef.BG, RenderObject> objectMap = new LinkedHashMap<>();
 
@@ -38,7 +40,7 @@ public class Stage extends GameObject<StageDef> {
     @Override
     public Void load() {
         List<StageDef.BG> bgs = config.getBackgrounds();
-        foregroundBGs = bgs.stream().filter(bg -> bg.isForeground()).collect(Collectors.toList());
+        foregroundBGs = bgs.stream().filter(StageDef.BG::isForeground).collect(Collectors.toList());
         backgroundBGs = bgs.stream().filter(bg -> !bg.isForeground()).collect(Collectors.toList());
 
         String stagesHomeDir = systemConfig.getResourceHome() + File.separator + STAGES_DIR;
@@ -51,6 +53,7 @@ public class Stage extends GameObject<StageDef> {
 
     @Override
     public void init() {
+        scalingMatrix = Matrix4f.resize(new Vector3f(config.getScalingX(), config.getScalingY(), 1f));
         for (StageDef.BG bg : backgroundBGs) {
             SpriteId spriteId = bg.getSpriteId();
             Sprite sprite = sprites.getElement(spriteId.group, spriteId.id);
@@ -92,6 +95,7 @@ public class Stage extends GameObject<StageDef> {
         Shader bgShader = Shaders.getBackgroundShader();
         bgShader.enable();
         bgShader.setMatrix4f(Shader.VIEW_MATRIX, Camera.INSTANCE.getViewMatrix());
+        bgShader.setMatrix4f(Shader.SCALING_MATRIX, scalingMatrix);
         for (Map.Entry<StageDef.BG, RenderObject> entry : objectMap.entrySet()) {
             RenderObject renderObject = entry.getValue();
             renderObject.configShader(bgShader);

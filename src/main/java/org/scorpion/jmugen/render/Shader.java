@@ -23,6 +23,7 @@ public class Shader {
 
     public static final String VIEW_MATRIX = "view_mat";
     public static final String MODEL_MATRIX = "model_mat";
+    public static final String SCALING_MATRIX = "scaling_mat";
     public static final String ALPHA_MODIFIER = "alpha_modifier";
 
     public Shader(String name, Resource vertex, Resource fragment) {

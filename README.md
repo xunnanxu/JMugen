@@ -16,6 +16,11 @@ OpenGL 3.0+
 
 ### Def Config
 
+#### Scaling
+
+* xscale
+* yscale
+
 #### BG
 
 * spriteno
