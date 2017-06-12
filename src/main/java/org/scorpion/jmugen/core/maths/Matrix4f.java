@@ -7,12 +7,9 @@ import java.nio.FloatBuffer;
 public class Matrix4f {
 
     private float[] elements = new float[16];
+    private FloatBuffer buffer;
 
-    public Matrix4f() {
-    }
-
-    public Matrix4f(float[] elements) {
-        this.elements = elements;
+    private Matrix4f() {
     }
 
     public static Matrix4f identity() {
@@ -42,19 +39,25 @@ public class Matrix4f {
      * 0 0 0 1<br>
      */
     public static Matrix4f translate(Vector3f vector) {
-        Matrix4f m = identity();
-        m.elements[12] = vector.x;
-        m.elements[13] = vector.y;
-        m.elements[14] = vector.z;
-        return m;
+        return identity().translateTo(vector);
+    }
+
+    public Matrix4f translateTo(Vector3f vector) {
+        elements[12] = vector.x;
+        elements[13] = vector.y;
+        elements[14] = vector.z;
+        return this;
     }
 
     public static Matrix4f resize(Vector3f vector) {
-        Matrix4f m = identity();
-        m.elements[0] = vector.x;
-        m.elements[5] = vector.y;
-        m.elements[10] = vector.z;
-        return m;
+        return identity().resizeTo(vector);
+    }
+
+    public Matrix4f resizeTo(Vector3f vector) {
+        elements[0] = vector.x;
+        elements[5] = vector.y;
+        elements[10] = vector.z;
+        return this;
     }
 
     /**
@@ -90,7 +93,14 @@ public class Matrix4f {
     }
 
     public FloatBuffer toFloatBuffer() {
-        return BufferUtils.toFloatBuffer(elements);
+        if (buffer == null) {
+            buffer = BufferUtils.toFloatBuffer(elements);
+            return buffer;
+        }
+        buffer.rewind();
+        buffer.put(elements);
+        buffer.flip();
+        return buffer;
     }
 
 }

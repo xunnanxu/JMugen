@@ -6,7 +6,7 @@ import org.scorpion.jmugen.core.config.SystemConfig;
 import org.scorpion.jmugen.core.data.GroupedContent;
 import org.scorpion.jmugen.core.format.Sprite;
 import org.scorpion.jmugen.core.maths.Matrix4f;
-import org.scorpion.jmugen.core.maths.Point2f;
+import org.scorpion.jmugen.core.maths.Point2i;
 import org.scorpion.jmugen.core.maths.Vector3f;
 import org.scorpion.jmugen.core.render.RenderObject;
 import org.scorpion.jmugen.core.render.RenderProperties;
@@ -27,6 +27,7 @@ public class Stage extends GameObject<StageDef> {
     private static final String STAGES_DIR = "stages";
     private static final Logger LOG = LoggerFactory.getLogger(Stage.class);
 
+    private Camera camera;
     private List<StageDef.BG> foregroundBGs;
     private List<StageDef.BG> backgroundBGs;
     private Matrix4f scalingMatrix;
@@ -53,6 +54,7 @@ public class Stage extends GameObject<StageDef> {
 
     @Override
     public void init() {
+        camera = new Camera(systemConfig);
         scalingMatrix = Matrix4f.resize(new Vector3f(config.getScalingX(), config.getScalingY(), 1f));
         for (StageDef.BG bg : backgroundBGs) {
             SpriteId spriteId = bg.getSpriteId();
@@ -60,13 +62,11 @@ public class Stage extends GameObject<StageDef> {
             if (sprite == null) {
                 continue;
             }
-            Texture.Properties textureProps = new Texture.Properties();
-            textureProps.repeatX = bg.getTileX() != 0;
-            Texture texture = new Texture(sprite, textureProps).load();
+            Texture texture = new Texture(sprite).load();
             int width = sprite.getWidth();
             int height = sprite.getHeight();
 
-            Point2f start = bg.getStartCoord();
+            Point2i start = bg.getStartCoord();
             // Specifies the background element's starting position with respect to the top center of the screen
             // (positive y values go downward). The background elementfs axis (the one specified for the designated
             // sprite in the SFF) is placed at this starting position. If omitted, start defaults to 0,0.
@@ -74,16 +74,23 @@ public class Stage extends GameObject<StageDef> {
             LOG.debug(bg.getName() + " width: " + width);
             LOG.debug(bg.getName() + " height: " + height);
 
+            Point2i offset = new Point2i(camera.getViewportWidth() / 2 - sprite.getXOffset() - start.x,
+                    sprite.getYOffset() - start.y);
+
             RenderProperties renderProperties = new RenderProperties();
+            renderProperties.camera = camera;
             renderProperties.colorBlending = bg.getTrans();
             renderProperties.alphaModifier = bg.getAlphaModifier();
+            renderProperties.tileX = bg.getTileX();
+            renderProperties.tileY = bg.getTileY();
+            renderProperties.tileSpacingX = bg.getTileSpacingX();
+            renderProperties.tileSpacingY = bg.getTileSpacingY();
+            renderProperties.offset = offset;
 
             // for mugen sprites, the "start" coordinates are related to the top center of the screen
             Mesh mesh = new RectangularMesh(
-                    new Vector3f(systemConfig.getGameWidth() / 2 - sprite.getXOffset(),
-                            -start.y + sprite.getYOffset(), 0),
-                    new Vector3f(systemConfig.getGameWidth() / 2 - sprite.getXOffset() + sprite.getWidth(),
-                            -start.y - height + sprite.getYOffset(), 0)
+                    Vector3f.ZERO,
+                    new Vector3f(width, -height, 0)
             );
             objectMap.put(bg, new RenderObject(mesh, texture, renderProperties));
         }
@@ -94,12 +101,12 @@ public class Stage extends GameObject<StageDef> {
         glDisable(GL_DEPTH_TEST);
         Shader bgShader = Shaders.getBackgroundShader();
         bgShader.enable();
-        bgShader.setMatrix4f(Shader.VIEW_MATRIX, Camera.INSTANCE.getViewMatrix());
+        bgShader.setMatrix4f(Shader.VIEW_MATRIX, camera.getViewMatrix());
         bgShader.setMatrix4f(Shader.SCALING_MATRIX, scalingMatrix);
         for (Map.Entry<StageDef.BG, RenderObject> entry : objectMap.entrySet()) {
             RenderObject renderObject = entry.getValue();
             renderObject.configShader(bgShader);
-            renderObject.render();
+            renderObject.render(bgShader);
             renderObject.resetShader(bgShader);
         }
         bgShader.disable();

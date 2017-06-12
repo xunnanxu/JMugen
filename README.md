@@ -32,3 +32,5 @@ OpenGL 3.0+
     * ADD1
     * ADDALPHA
 * alpha
+* tile
+* tilespacing

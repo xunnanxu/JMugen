@@ -32,7 +32,7 @@ public class StageDef implements Def<StageDef> {
             BG_CONFIG_CONVERTERS.put(TYPE, input -> Type.valueOf(input.toUpperCase()));
             BG_CONFIG_CONVERTERS.put(SPRITE_NO, SpriteId::fromString);
             BG_CONFIG_CONVERTERS.put(LAYER_NO, Integer::valueOf);
-            BG_CONFIG_CONVERTERS.put(START, Point2f::fromString);
+            BG_CONFIG_CONVERTERS.put(START, Point2i::fromString);
             BG_CONFIG_CONVERTERS.put(DELTA, Point2f::fromString);
             BG_CONFIG_CONVERTERS.put(TRANS, input -> Trans.valueOf(input.toUpperCase()));
             BG_CONFIG_CONVERTERS.put(ALPHA, Point2i::fromString);
@@ -110,8 +110,8 @@ public class StageDef implements Def<StageDef> {
             return (SpriteId) config.get(SPRITE_NO);
         }
 
-        public Point2f getStartCoord() {
-            return (Point2f) config.get(START);
+        public Point2i getStartCoord() {
+            return (Point2i) config.get(START);
         }
 
         public int getTileX() {
@@ -120,6 +120,14 @@ public class StageDef implements Def<StageDef> {
 
         public int getTileY() {
             return ((Point2i) config.get(TILE)).y;
+        }
+
+        public int getTileSpacingX() {
+            return ((Point2i) config.get(TILE_SPACING)).x;
+        }
+
+        public int getTileSpacingY() {
+            return ((Point2i) config.get(TILE_SPACING)).y;
         }
 
         public Trans getTrans() {
@@ -172,8 +180,8 @@ public class StageDef implements Def<StageDef> {
             )
             .add(GROUP_BG_DEF, new Config(DEBUG_BG, "0"))
             .add(GROUP_SCALING_INFO, Config.build()
-                    .add(XSCALE, 1.0f)
-                    .add(YSCALE, 1.0f)
+                    .add(XSCALE, "1")
+                    .add(YSCALE, "1")
                     .get())
             .get();
 
