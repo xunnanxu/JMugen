@@ -16,6 +16,13 @@ OpenGL 3.0+
 
 ### Def Config
 
+#### Camera
+
+* startx
+* starty
+* boundleft
+* boundright
+
 #### Scaling
 
 * xscale
@@ -32,5 +39,6 @@ OpenGL 3.0+
     * ADD1
     * ADDALPHA
 * alpha
+* delta
 * tile
 * tilespacing

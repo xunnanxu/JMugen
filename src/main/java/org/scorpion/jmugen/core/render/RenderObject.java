@@ -2,7 +2,6 @@ package org.scorpion.jmugen.core.render;
 
 import org.scorpion.jmugen.core.config.StageDef;
 import org.scorpion.jmugen.core.maths.Matrix4f;
-import org.scorpion.jmugen.core.maths.Vector3f;
 import org.scorpion.jmugen.render.Mesh;
 import org.scorpion.jmugen.render.Shader;
 import org.scorpion.jmugen.render.Texture;
@@ -78,15 +77,20 @@ public class RenderObject {
         shader.setUniform1f(Shader.ALPHA_MODIFIER, 1f);
     }
 
+    public RenderProperties getRenderProperties() {
+        return renderProperties;
+    }
+
     private void drawMesh(Shader shader) {
+        float viewOffsetX = renderProperties.viewOffset.x * renderProperties.viewOffsetDelta.x;
+        float viewOffsetY = renderProperties.viewOffset.y * renderProperties.viewOffsetDelta.y;
         if (renderProperties.tileX == 0 && renderProperties.tileY == 0) {
-            modelMatrix.translateTo(new Vector3f(renderProperties.offset.x, renderProperties.offset.y, 0));
-            shader.setMatrix4f(Shader.MODEL_MATRIX, modelMatrix);
-            mesh.draw();
+            drawMeshAt(shader, renderProperties.offset.x + viewOffsetX,
+                    renderProperties.offset.y + viewOffsetY);
             return;
         }
-        int viewPortWidth = renderProperties.camera.getViewportWidth();
-        int viewPortHeight = renderProperties.camera.getViewportHeight();
+        int viewPortWidth = renderProperties.getSystemConfig().getGameWidth();
+        int viewPortHeight = renderProperties.getSystemConfig().getGameHeight();
         int numTilesLeftX = renderProperties.tileX;
         if (numTilesLeftX == 0) {
             numTilesLeftX = 1;
@@ -95,8 +99,8 @@ public class RenderObject {
         if (numTilesLeftY == 0) {
             numTilesLeftY = 1;
         }
-        int firstTileLeftX = renderProperties.offset.x;
-        int firstTileTopY = renderProperties.offset.y;
+        float firstTileLeftX = renderProperties.offset.x + viewOffsetX;
+        float firstTileTopY = renderProperties.offset.y + viewOffsetY;
         int textureWidth = texture.getWidth();
         int textureHeight = texture.getHeight();
         while (firstTileLeftX + textureWidth + renderProperties.tileSpacingX >= 0 &&
@@ -116,19 +120,23 @@ public class RenderObject {
             firstTileTopY += textureHeight + renderProperties.tileSpacingY;
         }
         for (int i = 0; renderProperties.tileX == 1 || i <= renderProperties.tileX; i++) {
-            int x = firstTileLeftX + i * (textureWidth + renderProperties.tileSpacingX);
+            float x = firstTileLeftX + i * (textureWidth + renderProperties.tileSpacingX);
             if (x >= viewPortWidth) {
                 break;
             }
             for (int j = 0; renderProperties.tileY == 1 || j <= renderProperties.tileY; j++) {
-                int y = firstTileTopY - j * (textureHeight + renderProperties.tileSpacingY);
+                float y = firstTileTopY - j * (textureHeight + renderProperties.tileSpacingY);
                 if (y <= -viewPortHeight) {
                     break;
                 }
-                modelMatrix.translateTo(new Vector3f(x, y, 0));
-                shader.setMatrix4f(Shader.MODEL_MATRIX, modelMatrix);
-                mesh.draw();
+                drawMeshAt(shader, x, y);
             }
         }
+    }
+
+    private void drawMeshAt(Shader shader, float x, float y) {
+        modelMatrix.translateTo(x, y, 0);
+        shader.setMatrix4f(Shader.MODEL_MATRIX, modelMatrix);
+        mesh.draw();
     }
 }

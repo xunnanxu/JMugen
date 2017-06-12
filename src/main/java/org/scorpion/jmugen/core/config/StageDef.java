@@ -106,6 +106,10 @@ public class StageDef implements Def<StageDef> {
             return Integer.valueOf(1).equals(config.get(LAYER_NO));
         }
 
+        public Point2f getDelta() {
+            return (Point2f) config.get(DELTA);
+        }
+
         public SpriteId getSpriteId() {
             return (SpriteId) config.get(SPRITE_NO);
         }
@@ -168,6 +172,14 @@ public class StageDef implements Def<StageDef> {
     private static final String XSCALE = "xscale";
     private static final String YSCALE = "yscale";
 
+    private static final String GROUP_CAMERA = "camera";
+    private static final String CAMERA_STARTX = "startx";
+    private static final String CAMERA_STARTY = "starty";
+    private static final String CAMERA_BOUND_LEFT = "boundleft";
+    private static final String CAMERA_BOUND_RIGHT = "boundright";
+    private static final String CAMERA_BOUND_HIGH = "boundhigh";
+    private static final String CAMERA_BOUND_LOW = "boundlow";
+
     private static final String GROUP_BG_DEF = "bgdef";
     private static final String SPR = "spr";
     private static final String DEBUG_BG = "debugbg";
@@ -183,6 +195,13 @@ public class StageDef implements Def<StageDef> {
                     .add(XSCALE, "1")
                     .add(YSCALE, "1")
                     .get())
+            .add(GROUP_CAMERA, Config.build()
+                    .add(CAMERA_STARTX, "0")
+                    .add(CAMERA_STARTY, "0")
+                    .add(CAMERA_BOUND_HIGH, "-25")
+                    .add(CAMERA_BOUND_LOW, "0")
+                    .get()
+            )
             .get();
 
     private static final Map<String, Function<String, ?>> STAGE_CONFIG_CONVERTERS = new HashMap<>();
@@ -202,6 +221,16 @@ public class StageDef implements Def<StageDef> {
     static {
         SCALING_CONFIG_CONVERTERS.put(XSCALE, Float::parseFloat);
         SCALING_CONFIG_CONVERTERS.put(YSCALE, Float::parseFloat);
+    }
+
+    private static final Map<String, Function<String, ?>> CAMERA_CONFIG_CONVERTERS = new HashMap<>();
+    static {
+        CAMERA_CONFIG_CONVERTERS.put(CAMERA_STARTX, Float::parseFloat);
+        CAMERA_CONFIG_CONVERTERS.put(CAMERA_STARTY, Float::parseFloat);
+        CAMERA_CONFIG_CONVERTERS.put(CAMERA_BOUND_LEFT, Float::parseFloat);
+        CAMERA_CONFIG_CONVERTERS.put(CAMERA_BOUND_RIGHT, Float::parseFloat);
+        CAMERA_CONFIG_CONVERTERS.put(CAMERA_BOUND_HIGH, Float::parseFloat);
+        CAMERA_CONFIG_CONVERTERS.put(CAMERA_BOUND_LOW, Float::parseFloat);
     }
 
     private String name;
@@ -240,6 +269,11 @@ public class StageDef implements Def<StageDef> {
                 .applyConverters(SCALING_CONFIG_CONVERTERS);
         stageConfig.add(GROUP_SCALING_INFO, scalingConfig);
 
+        Config cameraConfig = Optional.ofNullable(stageConfig.get(GROUP_CAMERA))
+                .orElseGet(Config::new)
+                .applyConverters(CAMERA_CONFIG_CONVERTERS);
+        stageConfig.add(GROUP_CAMERA, cameraConfig);
+
         // process BGs
         stageConfig.groups().forEach(group -> {
             if (!group.startsWith(BG.PREFIX)) {
@@ -275,6 +309,29 @@ public class StageDef implements Def<StageDef> {
 
     public boolean isDebugBgEnabled() {
         return stageConfig.get(GROUP_BG_DEF).get(DEBUG_BG);
+    }
+
+    public Point2f getCameraInitialOffset() {
+        return new Point2f(
+                stageConfig.get(GROUP_CAMERA, CAMERA_STARTX),
+                stageConfig.get(GROUP_CAMERA, CAMERA_STARTY)
+        );
+    }
+
+    public float getCameraBoundLeft() {
+        return stageConfig.get(GROUP_CAMERA, CAMERA_BOUND_LEFT);
+    }
+
+    public float getCameraBoundRight() {
+        return stageConfig.get(GROUP_CAMERA, CAMERA_BOUND_RIGHT);
+    }
+
+    public float getCameraBoundHigh() {
+        return stageConfig.get(GROUP_CAMERA, CAMERA_BOUND_HIGH);
+    }
+
+    public float getCameraBoundLow() {
+        return stageConfig.get(GROUP_CAMERA, CAMERA_BOUND_LOW);
     }
 
     @Override

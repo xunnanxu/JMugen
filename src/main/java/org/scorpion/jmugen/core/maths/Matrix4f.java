@@ -49,6 +49,13 @@ public class Matrix4f {
         return this;
     }
 
+    public Matrix4f translateTo(float x, float y, float z) {
+        elements[12] = x;
+        elements[13] = y;
+        elements[14] = z;
+        return this;
+    }
+
     public static Matrix4f resize(Vector3f vector) {
         return identity().resizeTo(vector);
     }

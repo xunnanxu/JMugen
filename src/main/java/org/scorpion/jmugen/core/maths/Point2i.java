@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.scorpion.jmugen.exception.ConfigException;
 
 public class Point2i {
-    public final int x, y;
+    public int x, y;
 
     public Point2i(int x, int y) {
         this.x = x;

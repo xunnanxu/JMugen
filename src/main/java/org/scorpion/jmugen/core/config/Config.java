@@ -1,6 +1,7 @@
 package org.scorpion.jmugen.core.config;
 
 import org.apache.commons.lang3.StringUtils;
+import org.scorpion.jmugen.exception.ConfigException;
 
 import java.util.*;
 import java.util.function.Function;
@@ -137,6 +138,8 @@ public class Config {
             T config = get(keys);
             if (config != null) {
                 add(keys, converter.apply(config));
+            } else {
+                throw new ConfigException(key + " is missing in config");
             }
         });
         return this;

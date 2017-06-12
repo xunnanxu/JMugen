@@ -1,16 +1,19 @@
 package org.scorpion.jmugen.core.element;
 
+import org.lwjgl.glfw.GLFW;
 import org.scorpion.jmugen.core.config.SpriteId;
 import org.scorpion.jmugen.core.config.StageDef;
 import org.scorpion.jmugen.core.config.SystemConfig;
 import org.scorpion.jmugen.core.data.GroupedContent;
 import org.scorpion.jmugen.core.format.Sprite;
 import org.scorpion.jmugen.core.maths.Matrix4f;
+import org.scorpion.jmugen.core.maths.Point2f;
 import org.scorpion.jmugen.core.maths.Point2i;
 import org.scorpion.jmugen.core.maths.Vector3f;
 import org.scorpion.jmugen.core.render.RenderObject;
 import org.scorpion.jmugen.core.render.RenderProperties;
 import org.scorpion.jmugen.io.input.file.SffFileReader;
+import org.scorpion.jmugen.io.input.keyboard.KeyboardInputHandler;
 import org.scorpion.jmugen.render.*;
 import org.scorpion.jmugen.util.FileResource;
 import org.slf4j.Logger;
@@ -27,15 +30,14 @@ public class Stage extends GameObject<StageDef> {
     private static final String STAGES_DIR = "stages";
     private static final Logger LOG = LoggerFactory.getLogger(Stage.class);
 
-    private Camera camera;
     private List<StageDef.BG> foregroundBGs;
     private List<StageDef.BG> backgroundBGs;
     private Matrix4f scalingMatrix;
     private GroupedContent<? extends Sprite> sprites;
     private Map<StageDef.BG, RenderObject> objectMap = new LinkedHashMap<>();
 
-    public Stage(SystemConfig systemConfig, StageDef config) {
-        super(systemConfig, config);
+    public Stage(SystemConfig systemConfig, StageDef config, KeyboardInputHandler keyboardInputHandler) {
+        super(systemConfig, config, keyboardInputHandler);
     }
 
     @Override
@@ -54,7 +56,6 @@ public class Stage extends GameObject<StageDef> {
 
     @Override
     public void init() {
-        camera = new Camera(systemConfig);
         scalingMatrix = Matrix4f.resize(new Vector3f(config.getScalingX(), config.getScalingY(), 1f));
         for (StageDef.BG bg : backgroundBGs) {
             SpriteId spriteId = bg.getSpriteId();
@@ -74,11 +75,10 @@ public class Stage extends GameObject<StageDef> {
             LOG.debug(bg.getName() + " width: " + width);
             LOG.debug(bg.getName() + " height: " + height);
 
-            Point2i offset = new Point2i(camera.getViewportWidth() / 2 - sprite.getXOffset() - start.x,
+            Point2f offset = new Point2f(systemConfig.getGameWidth() / 2 - sprite.getXOffset() - start.x,
                     sprite.getYOffset() - start.y);
 
-            RenderProperties renderProperties = new RenderProperties();
-            renderProperties.camera = camera;
+            RenderProperties renderProperties = new RenderProperties(systemConfig);
             renderProperties.colorBlending = bg.getTrans();
             renderProperties.alphaModifier = bg.getAlphaModifier();
             renderProperties.tileX = bg.getTileX();
@@ -86,6 +86,8 @@ public class Stage extends GameObject<StageDef> {
             renderProperties.tileSpacingX = bg.getTileSpacingX();
             renderProperties.tileSpacingY = bg.getTileSpacingY();
             renderProperties.offset = offset;
+            renderProperties.viewOffsetDelta = bg.getDelta();
+            renderProperties.viewOffset = new Point2f(0, 0);
 
             // for mugen sprites, the "start" coordinates are related to the top center of the screen
             Mesh mesh = new RectangularMesh(
@@ -101,7 +103,6 @@ public class Stage extends GameObject<StageDef> {
         glDisable(GL_DEPTH_TEST);
         Shader bgShader = Shaders.getBackgroundShader();
         bgShader.enable();
-        bgShader.setMatrix4f(Shader.VIEW_MATRIX, camera.getViewMatrix());
         bgShader.setMatrix4f(Shader.SCALING_MATRIX, scalingMatrix);
         for (Map.Entry<StageDef.BG, RenderObject> entry : objectMap.entrySet()) {
             RenderObject renderObject = entry.getValue();
@@ -115,7 +116,17 @@ public class Stage extends GameObject<StageDef> {
 
     @Override
     public void update() {
-
+        if (keyboardInputHandler.isKeyPressed(GLFW.GLFW_KEY_LEFT) ||
+                keyboardInputHandler.isKeyPressed(GLFW.GLFW_KEY_RIGHT)) {
+            for (RenderObject renderObject : objectMap.values()) {
+                RenderProperties props = renderObject.getRenderProperties();
+                if (keyboardInputHandler.isKeyPressed(GLFW.GLFW_KEY_LEFT)) {
+                    props.viewOffset.x = Math.min(props.viewOffset.x += 1, -config.getCameraBoundLeft());
+                } else {
+                    props.viewOffset.x = Math.max(props.viewOffset.x -= 1, -config.getCameraBoundRight());
+                }
+            }
+        }
     }
 
     @Override

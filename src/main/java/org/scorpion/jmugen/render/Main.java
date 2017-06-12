@@ -83,7 +83,7 @@ public class Main implements Runnable {
     private void bootstrap() {
         diskService = Executors.newSingleThreadExecutor();
         StageDef stageDef = new StageDef("kfm", DefParser.parse(new FileResource("data/stages/kfm.def"))).load();
-        Stage stage = new Stage(systemConfig, stageDef);
+        Stage stage = new Stage(systemConfig, stageDef, keyboardInputHandler);
         elements.add(stage);
     }
 

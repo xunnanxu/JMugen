@@ -12,7 +12,7 @@ public class KeyboardInputHandler extends GLFWKeyCallback {
 
     @Override
     public void invoke(long window, int key, int scancode, int action, int mods) {
-        keys[key] = action != GLFW.GLFW_PRESS;
+        keys[key] = action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT;
         if (action == GLFW.GLFW_PRESS) {
             keyStrokeHandlers.getOrDefault(key, Collections.emptyList()).forEach(h -> h.onKey(mods));
         }

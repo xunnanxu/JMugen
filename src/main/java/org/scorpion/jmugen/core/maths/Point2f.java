@@ -5,7 +5,7 @@ import org.scorpion.jmugen.exception.ConfigException;
 
 public class Point2f {
 
-    public final float x, y;
+    public float x, y;
 
     public Point2f(float x, float y) {
         this.x = x;
